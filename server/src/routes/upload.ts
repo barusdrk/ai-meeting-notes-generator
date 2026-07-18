@@ -1,11 +1,11 @@
 import { Router } from "express";
 import multer from "multer";
 
-import auth from "../middleware/auth";
+import auth from "../middleware/auth.js";
 
 import {
   extractText,
-} from "../services/extractText";
+} from "../services/extractText.js";
 
 const router = Router();
 

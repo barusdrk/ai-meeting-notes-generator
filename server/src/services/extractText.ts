@@ -1,56 +1,74 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import mammoth from "mammoth";
 import { PDFParse } from "pdf-parse";
 
 export async function extractText(
-  filePath: string,
-  originalName: string
+  file: Express.Multer.File
 ): Promise<string> {
-  const extension = path.extname(originalName).toLowerCase();
+  const extension = getExtension(file.originalname);
 
   switch (extension) {
     case ".txt":
-      return readTextFile(filePath);
+      return extractTxt(file);
 
     case ".docx":
-      return readDocxFile(filePath);
+      return extractDocx(file);
 
     case ".pdf":
-      return readPdfFile(filePath);
+      return extractPdf(file);
 
     default:
-      throw new Error(`Unsupported file type: ${extension}`);
+      throw new Error(
+        `Unsupported file type: ${extension}`
+      );
   }
 }
 
-async function readTextFile(
-  filePath: string
-): Promise<string> {
-  return fs.readFile(filePath, "utf8");
+function getExtension(
+  filename: string
+): string {
+  const index = filename.lastIndexOf(".");
+
+  if (index === -1) {
+    return "";
+  }
+
+  return filename
+    .substring(index)
+    .toLowerCase();
 }
 
-async function readDocxFile(
-  filePath: string
+async function extractTxt(
+  file: Express.Multer.File
 ): Promise<string> {
-  const result = await mammoth.extractRawText({
-    path: filePath,
-  });
+  return file.buffer
+    .toString("utf8")
+    .trim();
+}
+
+async function extractDocx(
+  file: Express.Multer.File
+): Promise<string> {
+  const result =
+    await mammoth.extractRawText({
+      buffer: file.buffer,
+    });
 
   return result.value.trim();
 }
 
-async function readPdfFile(
-  filePath: string
+async function extractPdf(
+  file: Express.Multer.File
 ): Promise<string> {
   const parser = new PDFParse({
-    data: await fs.readFile(filePath),
+    data: file.buffer,
   });
 
-  const result = await parser.getText();
+  try {
+    const result =
+      await parser.getText();
 
-  await parser.destroy();
-
-  return result.text.trim();
+    return result.text.trim();
+  } finally {
+    await parser.destroy();
+  }
 }

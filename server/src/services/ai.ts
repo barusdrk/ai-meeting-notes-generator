@@ -11,7 +11,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function generateMeetingNotes(
+export async function summarizeTranscript(
   transcript: string
 ): Promise<MeetingNotes> {
   // Demo mode
