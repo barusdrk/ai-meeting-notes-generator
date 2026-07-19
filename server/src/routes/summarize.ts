@@ -3,7 +3,7 @@ import { Router } from "express";
 import auth from "../middleware/auth.js";
 
 import {
-  summarizeTranscript,
+  generateMeetingNotes,
 } from "../services/ai.js";
 
 const router = Router();
@@ -25,7 +25,7 @@ router.post(
       }
 
       const notes =
-        await summarizeTranscript(
+        await generateMeetingNotes(
           transcript
         );
 
