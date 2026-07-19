@@ -7,48 +7,53 @@ import { MeetingNotesSchema } from "../types/output.js";
 
 import { generateMockMeetingNotes } from "./mockAi.js";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-export async function summarizeTranscript(
+export async function generateMeetingNotes(
   transcript: string
 ): Promise<MeetingNotes> {
-  // Demo mode
+  // Demo mode: no OpenAI API key required.
   if (process.env.USE_MOCK_AI === "true") {
     console.log("Using mocked AI response.");
 
-    return generateMockMeetingNotes(
-      transcript
+    return generateMockMeetingNotes(transcript);
+  }
+
+  // Ensure an API key is available before creating the client.
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error(
+      "OPENAI_API_KEY environment variable is not set."
     );
   }
 
-  // Real AI mode
-  const response =
-    await openai.responses.create({
-      model: "gpt-5",
+  const openai = new OpenAI({
+    apiKey,
+  });
 
-      input: [
-        {
-          role: "system",
-          content: [
-            {
-              type: "input_text",
-              text: MEETING_PROMPT,
-            },
-          ],
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: transcript,
-            },
-          ],
-        },
-      ],
-    });
+  const response = await openai.responses.create({
+    model: "gpt-5",
+
+    input: [
+      {
+        role: "system",
+        content: [
+          {
+            type: "input_text",
+            text: MEETING_PROMPT,
+          },
+        ],
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: transcript,
+          },
+        ],
+      },
+    ],
+  });
 
   const text = response.output_text;
 
