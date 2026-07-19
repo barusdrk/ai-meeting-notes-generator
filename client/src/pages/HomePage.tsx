@@ -81,9 +81,9 @@ export default function HomePage() {
         </header>
 
         <TranscriptInput
-          onSummarize={
-            handleSummarize
-          }
+          loading={loading}
+          error={error}
+          onGenerate={handleSummarize}
         />
 
         {loading && (
