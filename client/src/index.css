@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:focus-visible {
+  outline: 2px solid rgb(59 130 246);
+  outline-offset: 2px;
+}
+
 :focus-visible {
   outline: 2px solid rgb(59 130 246);
   outline-offset: 2px;
