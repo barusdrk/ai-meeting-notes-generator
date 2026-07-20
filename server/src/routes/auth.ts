@@ -9,152 +9,151 @@ import auth, {
 
 const router = Router();
 
-router.post(
-  "/register",
-  async (req, res) => {
-    try {
-      const { email, password } =
-        req.body;
+function createToken(userId: string): string {
+  const secret = process.env.JWT_SECRET;
 
-      if (!email || !password) {
-        return res.status(400).json({
-          error:
-            "Email and password are required.",
-        });
-      }
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured.");
+  }
 
-      const existing =
-        await User.findOne({
-          email,
-        });
+  return jwt.sign(
+    { userId },
+    secret,
+    {
+      expiresIn: "7d",
+    }
+  );
+}
 
-      if (existing) {
-        return res.status(409).json({
-          error:
-            "User already exists.",
-        });
-      }
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-      const hash =
-        await bcrypt.hash(
-          password,
-          10
-        );
-
-      const user =
-        await User.create({
-          email,
-          password: hash,
-        });
-
-      const token = jwt.sign(
-        {
-          userId:
-            user._id.toString(),
-        },
-        process.env.JWT_SECRET!,
-        {
-          expiresIn: "7d",
-        }
-      );
-
-      return res.status(201).json({
-        token,
-        user: {
-          id: user._id,
-          email: user.email,
-        },
-      });
-    } catch {
-      return res.status(500).json({
-        error:
-          "Registration failed.",
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email.trim() ||
+      !password.trim()
+    ) {
+      return res.status(400).json({
+        error: "Email and password are required.",
       });
     }
-  }
-);
 
-router.post(
-  "/login",
-  async (req, res) => {
-    try {
-      const { email, password } =
-        req.body;
+    const existing = await User.findOne({
+      email: email.toLowerCase(),
+    });
 
-      const user =
-        await User.findOne({
-          email,
-        });
-
-      if (!user) {
-        return res.status(401).json({
-          error:
-            "Invalid email or password.",
-        });
-      }
-
-      const valid =
-        await bcrypt.compare(
-          password,
-          user.password
-        );
-
-      if (!valid) {
-        return res.status(401).json({
-          error:
-            "Invalid email or password.",
-        });
-      }
-
-      const token = jwt.sign(
-        {
-          userId:
-            user._id.toString(),
-        },
-        process.env.JWT_SECRET!,
-        {
-          expiresIn: "7d",
-        }
-      );
-
-      return res.json({
-        token,
-        user: {
-          id: user._id,
-          email: user.email,
-        },
-      });
-    } catch {
-      return res.status(500).json({
-        error:
-          "Login failed.",
+    if (existing) {
+      return res.status(409).json({
+        error: "User already exists.",
       });
     }
+
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10
+    );
+
+    const user = await User.create({
+      email: email.toLowerCase(),
+      password: hashedPassword,
+    });
+
+    const token = createToken(user._id.toString());
+
+    return res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      error: "Registration failed.",
+    });
   }
-);
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({
+        error: "Email and password are required.",
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        error: "Invalid email or password.",
+      });
+    }
+
+    const validPassword = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!validPassword) {
+      return res.status(401).json({
+        error: "Invalid email or password.",
+      });
+    }
+
+    const token = createToken(user._id.toString());
+
+    return res.json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      error: "Login failed.",
+    });
+  }
+});
 
 router.get(
   "/me",
   auth,
-  async (
-    req: AuthRequest,
-    res
-  ) => {
-    const user =
-      await User.findById(
-        req.userId
-      );
+  async (req: AuthRequest, res) => {
+    try {
+      const user = await User.findById(req.userId);
 
-    if (!user) {
-      return res.status(404).json({
-        error: "User not found.",
+      if (!user) {
+        return res.status(404).json({
+          error: "User not found.",
+        });
+      }
+
+      return res.json({
+        id: user._id,
+        email: user.email,
+      });
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        error: "Unable to fetch user.",
       });
     }
-
-    return res.json({
-      id: user._id,
-      email: user.email,
-    });
   }
 );
 
