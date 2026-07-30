@@ -1,52 +1,77 @@
 import OpenAI from "openai";
-import {MEETING_PROMPT} from "./prompt.js";
+import { zodTextFormat } from "openai/helpers/zod";
+import { MEETING_PROMPT } from "./prompt.js";
+import { MeetingResultSchema,type MeetingAIResult } from "../schemas/meeting.js";
 
-const client=new OpenAI({
-  apiKey:process.env.OPENAI_API_KEY,
-});
+function getClient(){
+  const apiKey=process.env.OPENAI_API_KEY;
 
-export interface MeetingAIResult{
-  summary:string[];
-  decisions:string[];
-  actionItems:{
-    title:string;
-    assignee?:string;
-    dueDate?:string;
-  }[];
+  if(!apiKey){
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  return new OpenAI({apiKey});
 }
 
 export async function summarizeTranscript(
   transcript:string
 ):Promise<MeetingAIResult>{
 
-  const response=
-    await client.chat.completions.create({
-      model:"gpt-5",
-      messages:[
-        {
-          role:"system",
-          content:MEETING_PROMPT,
-        },
-        {
-          role:"user",
-          content:transcript,
-        },
-      ],
-      response_format:{
-        type:"json_object",
+  const client=getClient();
+
+  const response=await client.responses.parse({
+    model:"gpt-5",
+    input:[
+      {
+        role:"system",
+        content:[
+          {
+            type:"input_text",
+            text:MEETING_PROMPT,
+          },
+        ],
       },
-    });
+      {
+        role:"user",
+        content:[
+          {
+            type:"input_text",
+            text:transcript,
+          },
+        ],
+      },
+    ],
+    text:{
+      format:zodTextFormat(
+        MeetingResultSchema,
+        "meeting_result"
+      ),
+    },
+  });
 
-  const content = response.choices[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(content);
+  if(!response.output_parsed){
+    throw new Error(
+      "AI returned an invalid response."
+    );
+  }
 
-  return {
-    summary: Array.isArray(parsed.summary) ? parsed.summary : [parsed.summary ?? ""],
-    decisions: Array.isArray(parsed.decisions) ? parsed.decisions : [],
-    actionItems: Array.isArray(parsed.actionItems)
-      ? parsed.actionItems.map((item: unknown) =>
-          typeof item === "string" ? item : String(item ?? "")
-        )
-      : [],
-  };
+  return response.output_parsed;
+}
+
+export async function summarizeSafe(
+  transcript:string
+):Promise<MeetingAIResult>{
+  try{
+    return await summarizeTranscript(transcript);
+  }catch(error){
+    console.error("AI Error:",error);
+
+    return{
+      summary:[
+        "Unable to generate summary.",
+      ],
+      decisions:[],
+      actionItems:[],
+    };
+  }
 }
