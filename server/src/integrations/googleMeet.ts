@@ -6,12 +6,23 @@ interface GoogleMeeting{
   endTime:string;
 }
 
-export async function createGoogleMeet(data:GoogleMeeting){
-  const token=process.env.GOOGLE_ACCESS_TOKEN;
+function getAccessToken(){
+  const token=
+    process.env.GOOGLE_ACCESS_TOKEN;
 
   if(!token){
-    throw new Error("Google access token missing.");
+    throw new Error(
+      "GOOGLE_ACCESS_TOKEN is not configured."
+    );
   }
+
+  return token;
+}
+
+export async function createGoogleMeet(
+  data:GoogleMeeting
+){
+  const token=getAccessToken();
 
   const response=await axios.post(
     "https://www.googleapis.com/calendar/v3/calendars/primary/events",

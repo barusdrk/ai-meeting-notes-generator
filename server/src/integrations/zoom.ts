@@ -6,12 +6,23 @@ interface ZoomMeeting{
   duration:number;
 }
 
-export async function createZoomMeeting(data:ZoomMeeting){
-  const token=process.env.ZOOM_ACCESS_TOKEN;
+function getAccessToken(){
+  const token=
+    process.env.ZOOM_ACCESS_TOKEN;
 
   if(!token){
-    throw new Error("Zoom token missing.");
+    throw new Error(
+      "ZOOM_ACCESS_TOKEN is not configured."
+    );
   }
+
+  return token;
+}
+
+export async function createZoomMeeting(
+  data:ZoomMeeting
+){
+  const token=getAccessToken();
 
   const response=await axios.post(
     "https://api.zoom.us/v2/users/me/meetings",
@@ -32,12 +43,10 @@ export async function createZoomMeeting(data:ZoomMeeting){
   return response.data;
 }
 
-export async function getZoomRecording(meetingId:string){
-  const token=process.env.ZOOM_ACCESS_TOKEN;
-
-  if(!token){
-    throw new Error("Zoom token missing.");
-  }
+export async function getZoomRecording(
+  meetingId:string
+){
+  const token=getAccessToken();
 
   const response=await axios.get(
     `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,

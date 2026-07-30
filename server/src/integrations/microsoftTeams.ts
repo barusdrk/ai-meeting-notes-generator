@@ -6,12 +6,23 @@ interface TeamsMeeting{
   endTime:string;
 }
 
-export async function createTeamsMeeting(data:TeamsMeeting){
-  const token=process.env.MICROSOFT_ACCESS_TOKEN;
+function getAccessToken(){
+  const token=
+    process.env.MICROSOFT_ACCESS_TOKEN;
 
   if(!token){
-    throw new Error("Microsoft access token missing.");
+    throw new Error(
+      "MICROSOFT_ACCESS_TOKEN is not configured."
+    );
   }
+
+  return token;
+}
+
+export async function createTeamsMeeting(
+  data:TeamsMeeting
+){
+  const token=getAccessToken();
 
   const response=await axios.post(
     "https://graph.microsoft.com/v1.0/me/onlineMeetings",

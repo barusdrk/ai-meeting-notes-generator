@@ -5,15 +5,35 @@ interface JiraTask{
   description?:string;
 }
 
-export async function createJiraIssue(task:JiraTask){
+function getConfig(){
   const domain=process.env.JIRA_DOMAIN;
   const email=process.env.JIRA_EMAIL;
   const token=process.env.JIRA_TOKEN;
   const projectKey=process.env.JIRA_PROJECT_KEY;
 
   if(!domain||!email||!token||!projectKey){
-    throw new Error("Jira configuration missing.");
+    throw new Error(
+      "Jira configuration is not complete."
+    );
   }
+
+  return{
+    domain,
+    email,
+    token,
+    projectKey,
+  };
+}
+
+export async function createJiraIssue(
+  task:JiraTask
+){
+  const{
+    domain,
+    email,
+    token,
+    projectKey,
+  }=getConfig();
 
   const response=await axios.post(
     `${domain}/rest/api/3/issue`,
@@ -23,7 +43,7 @@ export async function createJiraIssue(task:JiraTask){
           key:projectKey,
         },
         summary:task.title,
-        description:task.description||"",
+        description:task.description??"",
         issuetype:{
           name:"Task",
         },

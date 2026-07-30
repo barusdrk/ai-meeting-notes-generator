@@ -5,15 +5,23 @@ interface TeamsMessage{
   message:string;
 }
 
-export async function sendTeamsMessage(
-  data:TeamsMessage
-){
+function getWebhook(){
   const webhook=
     process.env.TEAMS_WEBHOOK_URL;
 
   if(!webhook){
-    throw new Error("Teams webhook missing.");
+    throw new Error(
+      "TEAMS_WEBHOOK_URL is not configured."
+    );
   }
+
+  return webhook;
+}
+
+export async function sendTeamsMessage(
+  data:TeamsMessage
+){
+  const webhook=getWebhook();
 
   const response=await axios.post(
     webhook,
