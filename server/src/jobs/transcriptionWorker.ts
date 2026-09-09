@@ -1,39 +1,41 @@
-import {Worker} from "bullmq";
-import {transcribeAudio} from "../services/transcription.js";
+import {Worker,Job} from "bullmq";
 import Meeting from "../models/Meeting.js";
+import {transcribeAudio} from "../services/transcription.js";
 import {summarizeTranscript} from "../services/ai.js";
 
-export const transcriptionWorker=
-new Worker(
+const connection={
+  url:process.env.REDIS_URL||"redis://127.0.0.1:6379",
+};
+
+export const transcriptionWorker=new Worker(
   "transcription",
-  async (job: any)=>{
-    const {
+  async(job:Job)=>{
+    const{
       meetingId,
       filePath,
-    }=job.data;
+    }=job.data as{
+      meetingId:string;
+      filePath:string;
+    };
 
     const transcript=
       await transcribeAudio(filePath);
 
-    const aiResult=
-      await summarizeTranscript(
-        transcript
-      );
+    const ai=
+      await summarizeTranscript(transcript);
 
     await Meeting.findByIdAndUpdate(
       meetingId,
       {
         transcript,
-        summary:aiResult.summary,
-        decisions:aiResult.decisions,
-        actionItems:aiResult.actionItems,
+        summary:ai.summary,
+        decisions:ai.decisions,
+        actionItems:ai.actionItems,
         status:"completed",
       }
     );
   },
   {
-    connection:{
-      url:process.env.REDIS_URL,
-    },
+    connection,
   }
 );

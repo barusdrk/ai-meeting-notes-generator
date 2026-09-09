@@ -1,27 +1,27 @@
-import {Worker} from "bullmq";
-import {
-  sendSummaryEmail,
-} from "../services/email.js";
+import {Worker,Job} from "bullmq";
+import {sendSummaryEmail} from "../services/email.js";
 
-export const emailWorker=
-new Worker(
+const connection={
+  url:process.env.REDIS_URL||"redis://127.0.0.1:6379",
+};
+
+export const emailWorker=new Worker(
   "emails",
-  async (job: any)=>{
-
-    const {
+  async(job:Job)=>{
+    const{
       email,
       summary,
-    }=job.data;
+    }=job.data as{
+      email:string;
+      summary:string[];
+    };
 
     await sendSummaryEmail(
       email,
       summary
     );
-
   },
   {
-    connection:{
-      url:process.env.REDIS_URL,
-    },
+    connection,
   }
 );

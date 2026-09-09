@@ -7,8 +7,7 @@ interface GoogleMeeting{
 }
 
 function getAccessToken(){
-  const token=
-    process.env.GOOGLE_ACCESS_TOKEN;
+  const token=process.env.GOOGLE_ACCESS_TOKEN;
 
   if(!token){
     throw new Error(
@@ -19,11 +18,16 @@ function getAccessToken(){
   return token;
 }
 
+function getHeaders(){
+  return{
+    Authorization:`Bearer ${getAccessToken()}`,
+    "Content-Type":"application/json",
+  };
+}
+
 export async function createGoogleMeet(
   data:GoogleMeeting
 ){
-  const token=getAccessToken();
-
   const response=await axios.post(
     "https://www.googleapis.com/calendar/v3/calendars/primary/events",
     {
@@ -47,10 +51,7 @@ export async function createGoogleMeet(
       params:{
         conferenceDataVersion:1,
       },
-      headers:{
-        Authorization:`Bearer ${token}`,
-        "Content-Type":"application/json",
-      },
+      headers:getHeaders(),
     }
   );
 

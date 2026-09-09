@@ -6,8 +6,7 @@ interface SlackMessage{
 }
 
 function getWebhook(){
-  const webhook=
-    process.env.SLACK_WEBHOOK_URL;
+  const webhook=process.env.SLACK_WEBHOOK_URL;
 
   if(!webhook){
     throw new Error(
@@ -21,15 +20,13 @@ function getWebhook(){
 export async function sendSlackMessage(
   message:SlackMessage
 ){
-  const webhook=getWebhook();
-
   const response=await axios.post(
-    webhook,
+    getWebhook(),
     {
       text:message.text,
       ...(message.channel&&{
-        channel:message.channel,
-      }),
+        channel:message.channel
+      })
     }
   );
 
@@ -40,6 +37,10 @@ export async function sendMeetingSummaryToSlack(
   summary:string[]
 ){
   return sendSlackMessage({
-    text:`AI Meeting Summary\n\n${summary.join("\n")}`,
+    text:[
+      "*AI Meeting Summary*",
+      "",
+      ...summary
+    ].join("\n")
   });
 }

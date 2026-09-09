@@ -1,36 +1,35 @@
 import Meeting from "../models/Meeting.js";
 import Task from "../models/Task.js";
-import User from "../models/User.js";
+import Organization from "../models/Organization.js";
 
 export async function getOrganizationAnalytics(
   organizationId:string
 ){
+  const organization=await Organization.findById(
+    organizationId
+  ).lean();
+
+  const memberIds=
+    organization?.members.map(
+      member=>member.userId
+    ) ?? [];
 
   const [
-    users,
     meetings,
     tasks,
     completedTasks,
     overdueTasks,
   ]=await Promise.all([
-
-    User.countDocuments({
-      organizationId,
-    }),
-
     Meeting.countDocuments({
       organizationId,
     }),
-
     Task.countDocuments({
       organizationId,
     }),
-
     Task.countDocuments({
       organizationId,
       status:"completed",
     }),
-
     Task.countDocuments({
       organizationId,
       status:{
@@ -40,29 +39,26 @@ export async function getOrganizationAnalytics(
         $lt:new Date(),
       },
     }),
-
   ]);
 
-  return {
-    users,
+  return{
+    users:memberIds.length,
     meetings,
     tasks,
     completedTasks,
     overdueTasks,
     completionRate:
       tasks===0
-        ? 0
-        : Math.round(
-            completedTasks/tasks*100
-          ),
+        ?0
+        :Math.round(
+          completedTasks/tasks*100
+        ),
   };
 }
-
 
 export async function getUserActivity(
   organizationId:string
 ){
-
   return Meeting.aggregate([
     {
       $match:{

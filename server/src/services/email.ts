@@ -1,25 +1,43 @@
 import nodemailer from "nodemailer";
 
+let transporter:
+  nodemailer.Transporter|undefined;
+
 function getTransporter(){
+
+  if(transporter){
+    return transporter;
+  }
+
+  const {
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_USER,
+    EMAIL_PASSWORD,
+  }=process.env;
+
   if(
-    !process.env.EMAIL_HOST||
-    !process.env.EMAIL_PORT||
-    !process.env.EMAIL_USER||
-    !process.env.EMAIL_PASSWORD
+    !EMAIL_HOST||
+    !EMAIL_PORT||
+    !EMAIL_USER||
+    !EMAIL_PASSWORD
   ){
     throw new Error(
-      "Email configuration is not complete."
+      "Email configuration is incomplete."
     );
   }
 
-  return nodemailer.createTransport({
-    host:process.env.EMAIL_HOST,
-    port:Number(process.env.EMAIL_PORT),
-    auth:{
-      user:process.env.EMAIL_USER,
-      pass:process.env.EMAIL_PASSWORD,
-    },
-  });
+  transporter=
+    nodemailer.createTransport({
+      host:EMAIL_HOST,
+      port:Number(EMAIL_PORT),
+      auth:{
+        user:EMAIL_USER,
+        pass:EMAIL_PASSWORD,
+      },
+    });
+
+  return transporter;
 }
 
 export async function sendMeetingEmail(
@@ -27,9 +45,8 @@ export async function sendMeetingEmail(
   subject:string,
   content:string
 ){
-  const transporter=getTransporter();
 
-  return transporter.sendMail({
+  return getTransporter().sendMail({
     from:process.env.EMAIL_USER,
     to,
     subject,
@@ -41,6 +58,7 @@ export async function sendSummaryEmail(
   email:string,
   summary:string[]
 ){
+
   return sendMeetingEmail(
     email,
     "Meeting Summary",

@@ -1,8 +1,13 @@
 import OpenAI from "openai";
 import fs from "fs";
 
+let client:OpenAI|undefined;
+
 function getClient(){
-  const apiKey=process.env.OPENAI_API_KEY;
+  if(client) return client;
+
+  const apiKey=
+    process.env.OPENAI_API_KEY;
 
   if(!apiKey){
     throw new Error(
@@ -10,22 +15,24 @@ function getClient(){
     );
   }
 
-  return new OpenAI({apiKey});
+  client=new OpenAI({apiKey});
+
+  return client;
 }
 
 export async function transcribeAudio(
   filePath:string
 ){
-  const client=getClient();
 
   const audio=
     fs.createReadStream(filePath);
 
   const response=
-    await client.audio.transcriptions.create({
-      model:"gpt-4o-transcribe",
-      file:audio,
-    });
+    await getClient()
+      .audio.transcriptions.create({
+        model:"gpt-4o-transcribe",
+        file:audio,
+      });
 
   return response.text;
 }

@@ -1,6 +1,16 @@
-import { Schema, model, type InferSchemaType } from "mongoose";
+import {Schema,model,InferSchemaType} from "mongoose";
 
-const taskSchema = new Schema({
+const taskSchema=new Schema({
+  organizationId:{
+    type:Schema.Types.ObjectId,
+    ref:"Organization",
+    required:true,
+    index:true,
+  },
+  workspaceId:{
+    type:Schema.Types.ObjectId,
+    ref:"Workspace",
+  },
   userId:{
     type:Schema.Types.ObjectId,
     ref:"User",
@@ -11,6 +21,7 @@ const taskSchema = new Schema({
     type:Schema.Types.ObjectId,
     ref:"Meeting",
     required:true,
+    index:true,
   },
   title:{
     type:String,
@@ -21,13 +32,10 @@ const taskSchema = new Schema({
     default:"",
   },
   assignedTo:{
-    type:String,
-    default:"",
+    type:Schema.Types.ObjectId,
+    ref:"User",
   },
-  dueDate:{
-    type:Date,
-    default:null,
-  },
+  dueDate:Date,
   status:{
     type:String,
     enum:["pending","in_progress","completed"],
@@ -41,12 +49,16 @@ const taskSchema = new Schema({
   source:{
     type:String,
     enum:["manual","ai_generated"],
-    default:"manual",
+    default:"ai_generated",
   },
 },{
   timestamps:true,
 });
 
-export type TaskDocument = InferSchemaType<typeof taskSchema>;
+export type TaskDocument=
+  InferSchemaType<typeof taskSchema>;
 
-export default model<TaskDocument>("Task", taskSchema);
+export default model(
+  "Task",
+  taskSchema
+);

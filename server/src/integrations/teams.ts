@@ -6,8 +6,7 @@ interface TeamsMessage{
 }
 
 function getWebhook(){
-  const webhook=
-    process.env.TEAMS_WEBHOOK_URL;
+  const webhook=process.env.TEAMS_WEBHOOK_URL;
 
   if(!webhook){
     throw new Error(
@@ -21,16 +20,14 @@ function getWebhook(){
 export async function sendTeamsMessage(
   data:TeamsMessage
 ){
-  const webhook=getWebhook();
-
   const response=await axios.post(
-    webhook,
+    getWebhook(),
     {
       "@type":"MessageCard",
       "@context":"http://schema.org/extensions",
       summary:data.title,
       title:data.title,
-      text:data.message,
+      text:data.message
     }
   );
 
@@ -42,6 +39,6 @@ export async function sendMeetingSummaryToTeams(
 ){
   return sendTeamsMessage({
     title:"AI Meeting Summary",
-    message:summary.join("\n"),
+    message:summary.join("\n")
   });
 }

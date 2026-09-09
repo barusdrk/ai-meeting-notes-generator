@@ -1,22 +1,26 @@
+import {Types} from "mongoose";
 import Meeting from "../models/Meeting.js";
 
 export async function getMeetingAnalytics(
   organizationId:string
 ){
+  const organizationObjectId=
+    new Types.ObjectId(organizationId);
+
   const total=
     await Meeting.countDocuments({
-      organizationId,
+      organizationId:organizationObjectId,
     });
 
   const completed=
     await Meeting.countDocuments({
-      organizationId,
+      organizationId:organizationObjectId,
       status:"completed",
     });
 
   const upcoming=
     await Meeting.countDocuments({
-      organizationId,
+      organizationId:organizationObjectId,
       status:"scheduled",
     });
 
@@ -24,7 +28,7 @@ export async function getMeetingAnalytics(
     await Meeting.aggregate([
       {
         $match:{
-          organizationId,
+          organizationId:organizationObjectId,
         },
       },
       {
@@ -42,6 +46,6 @@ export async function getMeetingAnalytics(
     completedMeetings:completed,
     upcomingMeetings:upcoming,
     averageDuration:
-      durations[0]?.averageDuration||0,
+      durations[0]?.averageDuration??0,
   };
 }

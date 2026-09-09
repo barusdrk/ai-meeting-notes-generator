@@ -1,110 +1,147 @@
 import {Router} from "express";
-import auth,{type AuthRequest} from "../middleware/auth.js";
-
 import {Queue} from "bullmq";
-
-import Meeting from "../models/Meeting.js";
+import auth,{type AuthRequest} from "../middleware/auth.js";
+import organizationAuth from "../middleware/organizationAuth.js";
+import requireConnectedAccount from "../middleware/requireConnectedAccount.js";
+import * as MeetingRepository from "../repositories/MeetingRepository.js";
 
 const router=Router();
 
-const transcriptionQueue=
-new Queue(
+const transcriptionQueue=new Queue(
   "transcription",
   {
     connection:{
-      url:
-        process.env.REDIS_URL,
+      url:process.env.REDIS_URL,
     },
   }
 );
 
 router.use(auth);
+router.use(organizationAuth);
 
 router.post(
   "/analyze",
-  async(
+  async (
     req:AuthRequest,
     res
   )=>{
     try{
-      const {
+      const{
         meetingId,
         filePath,
       }=req.body;
 
       if(
-        !meetingId ||
-        !filePath
+        typeof meetingId!=="string"||
+        typeof filePath!=="string"
       ){
-        return res.status(400)
-          .json({
-            error:
-              "Meeting ID and file path required.",
-          });
+        return res.status(400).json({
+          error:"Meeting ID and file path required.",
+        });
+      }
+
+      const organizationId=req.organizationId;
+
+      if(typeof organizationId!=="string"){
+        return res.status(403).json({
+          error:"Organization authentication required.",
+        });
       }
 
       const meeting=
-        await Meeting.findById(
-          meetingId
+        await MeetingRepository.findById(
+          meetingId,
+          organizationId
         );
 
       if(!meeting){
-        return res.status(404)
-          .json({
-            error:
-              "Meeting not found.",
-          });
+        return res.status(404).json({
+          error:"Meeting not found.",
+        });
       }
 
       await transcriptionQueue.add(
-        "analyze-meeting",
+        "transcribe",
         {
           meetingId,
           filePath,
-          userId:
-            req.userId,
+          userId:req.userId,
+          organizationId,
         }
       );
 
-      return res.json({
-        message:
-          "AI analysis started.",
+      res.json({
+        success:true,
+        message:"Meeting queued for AI analysis.",
       });
-
-    }catch(error){
-      return res.status(500)
-        .json({
-          error:
-            "AI analysis failed.",
-        });
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
     }
   }
 );
 
 router.get(
-  "/status/:id",
-  async(req,res)=>{
-    const meeting=
-      await Meeting.findById(
-        req.params.id
-      );
+  "/status/:meetingId",
+  async (
+    req:AuthRequest,
+    res
+  )=>{
+    try{
+      const meetingId=req.params.meetingId;
+      const organizationId=req.organizationId;
 
-    if(!meeting){
-      return res.status(404)
-        .json({
-          error:
-            "Meeting not found.",
+      if(typeof meetingId!=="string"){
+        return res.status(400).json({
+          error:"Invalid meeting ID.",
         });
-    }
+      }
 
-    return res.json({
-      status: "completed",
-      summary:
-        meeting.summary,
-      decisions:
-        meeting.decisions,
-      actionItems:
-        meeting.actionItems,
+      if(typeof organizationId!=="string"){
+        return res.status(403).json({
+          error:"Organization authentication required.",
+        });
+      }
+
+      const meeting=
+        await MeetingRepository.findById(
+          meetingId,
+          organizationId
+        );
+
+      if(!meeting){
+        return res.status(404).json({
+          error:"Meeting not found.",
+        });
+      }
+
+      res.json({
+        id:meeting._id,
+        transcript:meeting.transcript,
+        summary:meeting.summary,
+        decisions:meeting.decisions,
+        actionItems:meeting.actionItems,
+        status:meeting.status??"completed",
+      });
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
+  }
+);
+
+router.post(
+  "/reply",
+  requireConnectedAccount,
+  async (
+    req:AuthRequest,
+    res
+  )=>{
+    res.json({
+      success:true,
+      message:"Connected Gmail account verified.",
     });
   }
 );

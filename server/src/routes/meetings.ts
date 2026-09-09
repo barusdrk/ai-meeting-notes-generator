@@ -1,97 +1,167 @@
 import {Router} from "express";
 import auth,{type AuthRequest} from "../middleware/auth.js";
 import organizationAuth from "../middleware/organizationAuth.js";
-import Meeting from "../models/Meeting.js";
-
+import requireConnectedAccount from "../middleware/requireConnectedAccount.js";
+import * as MeetingRepository from "../repositories/MeetingRepository.js";
 import {createZoomMeeting} from "../integrations/zoom.js";
 import {createGoogleMeet} from "../integrations/googleMeet.js";
 import {createTeamsMeeting} from "../integrations/microsoftTeams.js";
 
 const router=Router();
 
+function requireProvider(
+  provider:"zoom"|"google_meet"|"teams"
+){
+  return(
+    req:AuthRequest,
+    res:any,
+    next:any
+  )=>{
+    req.headers["x-provider"]=provider;
+    return requireConnectedAccount(
+      req,
+      res,
+      next
+    );
+  };
+}
+
 router.use(auth);
 router.use(organizationAuth);
 
-router.post("/",async(req:AuthRequest,res)=>{
-  try{
-    const meeting=await Meeting.create({
-      ...req.body,
-      userId:req.userId,
-      organizationId:req.organizationId,
-    });
+router.post(
+  "/",
+  async(req:AuthRequest,res)=>{
+    try{
+      if(!req.userId||!req.organizationId){
+        return res.status(403).json({
+          error:"Organization authentication required.",
+        });
+      }
 
-    res.status(201).json(meeting);
-  }catch(error){
-    res.status(500).json({
-      error:"Meeting creation failed.",
-    });
+      const meeting=
+        await MeetingRepository.createMeeting({
+          ...req.body,
+          userId:req.userId,
+          organizationId:req.organizationId,
+        });
+
+      res.status(201).json(meeting);
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
   }
-});
+);
 
-router.get("/",async(req:AuthRequest,res)=>{
-  const meetings=await Meeting.find({
-    organizationId:req.organizationId,
-  }).sort({
-    createdAt:-1,
-  });
+router.get(
+  "/",
+  async(req:AuthRequest,res)=>{
+    try{
+      if(!req.organizationId){
+        return res.status(403).json({
+          error:"Organization authentication required.",
+        });
+      }
 
-  res.json(meetings);
-});
+      const meetings=
+        await MeetingRepository.findByOrganization(
+          req.organizationId
+        );
 
-router.get("/:id",async(req,res)=>{
-  const meeting=await Meeting.findById(
-    req.params.id
-  );
-
-  if(!meeting){
-    return res.status(404).json({
-      error:"Meeting not found.",
-    });
+      res.json(meetings);
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
   }
+);
 
-  res.json(meeting);
-});
+router.get(
+  "/:id",
+  async(req:AuthRequest,res)=>{
+    try{
+      if(!req.organizationId){
+        return res.status(403).json({
+          error:"Organization authentication required.",
+        });
+      }
 
+      if(typeof req.params.id!=="string"){
+        return res.status(400).json({
+          error:"Invalid meeting ID.",
+        });
+      }
 
-router.post("/zoom",async(req,res)=>{
-  try{
-    const result=
-      await createZoomMeeting(req.body);
+      const meeting=
+        await MeetingRepository.findById(
+          req.params.id,
+          req.organizationId
+        );
 
-    res.json(result);
-  }catch(error){
-    res.status(500).json({
-      error:"Zoom meeting failed.",
-    });
+      if(!meeting){
+        return res.status(404).json({
+          error:"Meeting not found.",
+        });
+      }
+
+      res.json(meeting);
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
   }
-});
+);
 
-
-router.post("/google-meet",async(req,res)=>{
-  try{
-    const result=
-      await createGoogleMeet(req.body);
-
-    res.json(result);
-  }catch(error){
-    res.status(500).json({
-      error:"Google Meet failed.",
-    });
+router.post(
+  "/zoom",
+  requireProvider("zoom"),
+  async(req:AuthRequest,res)=>{
+    try{
+      res.json(
+        await createZoomMeeting(req.body)
+      );
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
   }
-});
+);
 
-
-router.post("/teams",async(req,res)=>{
-  try{
-    const result=
-      await createTeamsMeeting(req.body);
-
-    res.json(result);
-  }catch(error){
-    res.status(500).json({
-      error:"Teams meeting failed.",
-    });
+router.post(
+  "/google-meet",
+  requireProvider("google_meet"),
+  async(req:AuthRequest,res)=>{
+    try{
+      res.json(
+        await createGoogleMeet(req.body)
+      );
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
   }
-});
+);
+
+router.post(
+  "/teams",
+  requireProvider("teams"),
+  async(req:AuthRequest,res)=>{
+    try{
+      res.json(
+        await createTeamsMeeting(req.body)
+      );
+    }catch(error:any){
+      res.status(500).json({
+        error:error.message,
+      });
+    }
+  }
+);
 
 export default router;

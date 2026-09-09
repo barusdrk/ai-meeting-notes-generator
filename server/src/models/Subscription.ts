@@ -5,10 +5,13 @@ const subscriptionSchema=new Schema({
     type:Schema.Types.ObjectId,
     ref:"Organization",
     required:true,
+    unique:true,
+    index:true,
   },
   stripeCustomerId:{
     type:String,
     required:true,
+    unique:true,
   },
   stripeSubscriptionId:{
     type:String,
@@ -31,6 +34,10 @@ const subscriptionSchema=new Schema({
       "trialing",
       "canceled",
       "past_due",
+      "incomplete",
+      "incomplete_expired",
+      "unpaid",
+      "paused",
     ],
     default:"active",
   },
@@ -42,7 +49,9 @@ const subscriptionSchema=new Schema({
 });
 
 export type SubscriptionDocument=
-  InferSchemaType<typeof subscriptionSchema>;
+  InferSchemaType<
+    typeof subscriptionSchema
+  >;
 
 export default model(
   "Subscription",

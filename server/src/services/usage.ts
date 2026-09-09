@@ -1,5 +1,8 @@
 import Usage from "../models/Usage.js";
-import {getPlanLimit,type UsageType} from "../usage.js";
+import {
+  getPlanLimit,
+  type UsageType,
+} from "../usage.js";
 
 function currentMonth(){
   return new Date()
@@ -7,35 +10,28 @@ function currentMonth(){
     .slice(0,7);
 }
 
-
 export async function getUsage(
   organizationId:string
 ){
-
-  let usage=
-    await Usage.findOne({
+  return Usage.findOneAndUpdate(
+    {
       organizationId,
       month:currentMonth(),
-    });
-
-  if(!usage){
-    usage=
-      await Usage.create({
-        organizationId,
-        month:currentMonth(),
-      });
-  }
-
-  return usage;
+    },
+    {},
+    {
+      upsert:true,
+      new:true,
+      setDefaultsOnInsert:true,
+    }
+  );
 }
-
 
 export async function incrementUsage(
   organizationId:string,
   type:UsageType,
   amount:number=1
 ){
-
   const usage=
     await getUsage(
       organizationId
@@ -48,42 +44,35 @@ export async function incrementUsage(
   return usage;
 }
 
-
 export async function checkUsageLimit(
   organizationId:string,
   plan:string,
   type:UsageType,
   amount:number=1
 ){
-
   const usage=
     await getUsage(
       organizationId
     );
 
-  const limit=
-    getPlanLimit(
-      plan,
-      type
-    );
-
-  return (
+  return(
     usage[type]+amount
-  ) <= limit;
+  )<=getPlanLimit(
+    plan,
+    type
+  );
 }
-
 
 export async function getUsageStats(
   organizationId:string,
   plan:string
 ){
-
   const usage=
     await getUsage(
       organizationId
     );
 
-  return {
+  return{
     aiRequests:{
       used:usage.aiRequests,
       limit:getPlanLimit(
@@ -91,7 +80,6 @@ export async function getUsageStats(
         "aiRequests"
       ),
     },
-
     transcriptionMinutes:{
       used:
         usage.transcriptionMinutes,
@@ -100,7 +88,6 @@ export async function getUsageStats(
         "transcriptionMinutes"
       ),
     },
-
     storageMB:{
       used:usage.storageMB,
       limit:getPlanLimit(
@@ -111,16 +98,21 @@ export async function getUsageStats(
   };
 }
 
-
 export async function resetMonthlyUsage(
   organizationId:string
 ){
-
-  return Usage.create({
-    organizationId,
-    month:currentMonth(),
-    aiRequests:0,
-    transcriptionMinutes:0,
-    storageMB:0,
-  });
+  return Usage.findOneAndUpdate(
+    {
+      organizationId,
+      month:currentMonth(),
+    },
+    {
+      aiRequests:0,
+      transcriptionMinutes:0,
+      storageMB:0,
+    },
+    {
+      new:true,
+    }
+  );
 }

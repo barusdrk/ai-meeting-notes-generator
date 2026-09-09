@@ -1,27 +1,36 @@
-import { Schema, model, type InferSchemaType } from "mongoose";
+import {Schema,model,InferSchemaType} from "mongoose";
 
-const reminderSchema = new Schema({
+const reminderSchema=new Schema({
+  organizationId:{
+    type:Schema.Types.ObjectId,
+    ref:"Organization",
+    required:true,
+    index:true,
+  },
   userId:{
     type:Schema.Types.ObjectId,
     ref:"User",
     required:true,
+    index:true,
   },
-  meetingId:{
+  taskId:{
     type:Schema.Types.ObjectId,
-    ref:"Meeting",
-    default:null,
+    ref:"Task",
   },
   title:{
     type:String,
     required:true,
+    trim:true,
   },
   message:{
     type:String,
     required:true,
+    trim:true,
   },
   remindAt:{
     type:Date,
     required:true,
+    index:true,
   },
   completed:{
     type:Boolean,
@@ -35,6 +44,18 @@ const reminderSchema = new Schema({
   timestamps:true,
 });
 
-export type ReminderDocument = InferSchemaType<typeof reminderSchema>;
+reminderSchema.index({
+  organizationId:1,
+  userId:1,
+  remindAt:1,
+});
 
-export default model<ReminderDocument>("Reminder", reminderSchema);
+export type ReminderDocument=
+  InferSchemaType<
+    typeof reminderSchema
+  >;
+
+export default model(
+  "Reminder",
+  reminderSchema
+);

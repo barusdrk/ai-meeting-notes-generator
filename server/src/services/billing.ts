@@ -1,6 +1,12 @@
 import Stripe from "stripe";
 
+let stripe:Stripe|null=null;
+
 function getStripe(){
+  if(stripe){
+    return stripe;
+  }
+
   const key=process.env.STRIPE_SECRET_KEY;
 
   if(!key){
@@ -9,32 +15,81 @@ function getStripe(){
     );
   }
 
-  return new Stripe(key);
+  stripe=new Stripe(key);
+
+  return stripe;
 }
 
 export async function createCustomer(
-  email:string
+  email:string,
+  organizationId:string
 ){
-  const stripe=getStripe();
-
-  return stripe.customers.create({
+  return getStripe().customers.create({
     email,
+    metadata:{
+      organizationId,
+    },
+  });
+}
+
+export async function createCheckoutSession(
+  customerId:string,
+  priceId:string,
+  organizationId:string,
+  plan:string
+){
+  const clientUrl=
+    process.env.CLIENT_URL;
+
+  if(!clientUrl){
+    throw new Error(
+      "CLIENT_URL is not configured."
+    );
+  }
+
+  return getStripe().checkout.sessions.create({
+    mode:"subscription",
+    customer:customerId,
+    line_items:[
+      {
+        price:priceId,
+        quantity:1,
+      },
+    ],
+    success_url:
+      `${clientUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:
+      `${clientUrl}/billing/cancel`,
+    metadata:{
+      organizationId,
+      plan,
+    },
+    subscription_data:{
+      metadata:{
+        organizationId,
+        plan,
+      },
+    },
   });
 }
 
 export async function createSubscription(
   customerId:string,
-  priceId:string
-){
-  const stripe=getStripe();
-
-  return stripe.subscriptions.create({
+  priceId:string,
+  organizationId:string,
+  plan:string
+):Promise<Stripe.Subscription>{
+  return getStripe().subscriptions.create({
     customer:customerId,
     items:[
       {
         price:priceId,
       },
     ],
+    metadata:{
+      organizationId,
+      plan,
+    },
     payment_behavior:
       "default_incomplete",
     expand:[
@@ -46,9 +101,7 @@ export async function createSubscription(
 export async function cancelSubscription(
   subscriptionId:string
 ){
-  const stripe=getStripe();
-
-  return stripe.subscriptions.cancel(
+  return getStripe().subscriptions.cancel(
     subscriptionId
   );
 }
@@ -56,10 +109,21 @@ export async function cancelSubscription(
 export async function getSubscription(
   subscriptionId:string
 ){
-  const stripe=getStripe();
-
-  return stripe.subscriptions.retrieve(
+  return getStripe().subscriptions.retrieve(
     subscriptionId
+  );
+}
+
+export async function getCheckoutSession(
+  sessionId:string
+){
+  return getStripe().checkout.sessions.retrieve(
+    sessionId,
+    {
+      expand:[
+        "subscription",
+      ],
+    }
   );
 }
 
@@ -67,8 +131,6 @@ export function verifyWebhook(
   body:Buffer|string,
   signature:string
 ){
-  const stripe=getStripe();
-
   const secret=
     process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -78,7 +140,7 @@ export function verifyWebhook(
     );
   }
 
-  return stripe.webhooks.constructEvent(
+  return getStripe().webhooks.constructEvent(
     body,
     signature,
     secret

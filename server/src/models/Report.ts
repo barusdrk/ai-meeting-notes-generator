@@ -5,15 +5,24 @@ const reportSchema=new Schema({
     type:Schema.Types.ObjectId,
     ref:"Organization",
     required:true,
+    index:true,
+  },
+  workspaceId:{
+    type:Schema.Types.ObjectId,
+    ref:"Workspace",
+  },
+  generatedBy:{
+    type:Schema.Types.ObjectId,
+    ref:"User",
   },
   type:{
     type:String,
-    enum:[
-      "weekly",
-      "monthly",
-      "custom",
-    ],
+    enum:["weekly","monthly","custom"],
     default:"monthly",
+  },
+  summary:{
+    type:String,
+    default:"",
   },
   data:{
     users:Number,
@@ -23,10 +32,6 @@ const reportSchema=new Schema({
     pendingTasks:Number,
     overdueTasks:Number,
     completionRate:Number,
-  },
-  generatedBy:{
-    type:Schema.Types.ObjectId,
-    ref:"User",
   },
 },{
   timestamps:true,

@@ -7,8 +7,7 @@ interface ZoomMeeting{
 }
 
 function getAccessToken(){
-  const token=
-    process.env.ZOOM_ACCESS_TOKEN;
+  const token=process.env.ZOOM_ACCESS_TOKEN;
 
   if(!token){
     throw new Error(
@@ -19,24 +18,26 @@ function getAccessToken(){
   return token;
 }
 
+function getHeaders(){
+  return{
+    Authorization:`Bearer ${getAccessToken()}`,
+    "Content-Type":"application/json"
+  };
+}
+
 export async function createZoomMeeting(
   data:ZoomMeeting
 ){
-  const token=getAccessToken();
-
   const response=await axios.post(
     "https://api.zoom.us/v2/users/me/meetings",
     {
       topic:data.topic,
       type:2,
       start_time:data.startTime,
-      duration:data.duration,
+      duration:data.duration
     },
     {
-      headers:{
-        Authorization:`Bearer ${token}`,
-        "Content-Type":"application/json",
-      },
+      headers:getHeaders()
     }
   );
 
@@ -46,14 +47,12 @@ export async function createZoomMeeting(
 export async function getZoomRecording(
   meetingId:string
 ){
-  const token=getAccessToken();
-
   const response=await axios.get(
     `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
     {
       headers:{
-        Authorization:`Bearer ${token}`,
-      },
+        Authorization:`Bearer ${getAccessToken()}`
+      }
     }
   );
 

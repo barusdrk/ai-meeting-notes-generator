@@ -1,6 +1,6 @@
-import { Schema, model, type InferSchemaType } from "mongoose";
+import {Schema,model,InferSchemaType} from "mongoose";
 
-const userSchema = new Schema({
+const userSchema=new Schema({
   email:{
     type:String,
     required:true,
@@ -12,10 +12,28 @@ const userSchema = new Schema({
     type:String,
     required:true,
   },
+  name:{
+    type:String,
+    trim:true,
+    default:"",
+  },
+  avatar:{
+    type:String,
+    default:null,
+  },
+  lastLoginAt:Date,
+  emailVerified:{
+    type:Boolean,
+    default:false,
+  },
 },{
   timestamps:true,
 });
 
-export type UserDocument = InferSchemaType<typeof userSchema>;
+export type UserDocument=
+  InferSchemaType<typeof userSchema>;
 
-export default model<UserDocument>("User", userSchema);
+export default model(
+  "User",
+  userSchema
+);
