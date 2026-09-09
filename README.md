@@ -171,6 +171,8 @@ npm install
 
 ## Server
 
+From the client directory:
+
 ```bash
 cd ../server
 
@@ -181,10 +183,10 @@ npm install
 
 # Environment Variables
 
-Create:
+From the root directory, create:
 
-```
-server/.env
+```bash
+touch server/.env
 ```
 
 Example:
