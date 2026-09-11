@@ -314,6 +314,12 @@ This project demonstrates:
 
 ---
 
+# License
+
+MIT License
+
+---
+
 ## Author
 
 **Derek Barus**
