@@ -4,17 +4,17 @@ AI Meeting Notes Generator is a full-stack AI application that converts raw meet
 
 Users can:
 
-- Paste meeting transcripts
-- Upload PDF, DOCX, or TXT transcripts
-- Generate AI meeting summaries
-- View decisions
-- View action items
-- View assigned tasks
-- Copy results to clipboard
-- Export results to PDF
-- Export results to Microsoft Word
-- Create an account and log in
-- Use Dark Mode
+* Paste meeting transcripts
+* Upload PDF, DOCX, or TXT transcripts
+* Generate AI meeting summaries
+* View decisions
+* View action items
+* View assigned tasks
+* Copy results to clipboard
+* Export results to PDF
+* Export results to Microsoft Word
+* Create an account and log in
+* Use Dark Mode
 
 ---
 
@@ -32,10 +32,10 @@ Generate structured meeting notes from long transcripts.
 
 Output includes:
 
-- Summary
-- Decisions
-- Action Items
-- Assigned Tasks
+* Summary
+* Decisions
+* Action Items
+* Assigned Tasks
 
 ---
 
@@ -43,9 +43,9 @@ Output includes:
 
 Supported formats:
 
-- TXT
-- DOCX
-- PDF
+* TXT
+* DOCX
+* PDF
 
 ---
 
@@ -53,10 +53,10 @@ Supported formats:
 
 JWT authentication
 
-- Register
-- Login
-- Logout
-- Protected API routes
+* Register
+* Login
+* Logout
+* Protected API routes
 
 Passwords are securely hashed using bcrypt.
 
@@ -66,8 +66,8 @@ Passwords are securely hashed using bcrypt.
 
 Export generated meeting notes to:
 
-- PDF
-- Microsoft Word (.docx)
+* PDF
+* Microsoft Word (.docx)
 
 ---
 
@@ -89,24 +89,24 @@ Theme preference is saved in localStorage.
 
 ## Frontend
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS v4
-- Axios
-- React Router
+* React
+* TypeScript
+* Vite
+* Tailwind CSS v4
+* Axios
+* React Router
 
 ## Backend
 
-- Node.js
-- Express
-- TypeScript
-- OpenAI API
-- MongoDB
-- Mongoose
-- JWT
-- bcrypt
-- Multer
+* Node.js
+* Express
+* TypeScript
+* OpenAI API
+* MongoDB
+* Mongoose
+* JWT
+* bcrypt
+* Multer
 
 ---
 
@@ -265,9 +265,9 @@ POST /api/upload
 
 Supported:
 
-- txt
-- docx
-- pdf
+* txt
+* docx
+* pdf
 
 ---
 
@@ -294,26 +294,26 @@ Produces:
 
 This project demonstrates:
 
-- OpenAI Responses API
-- Long-context prompting
-- Structured JSON output
-- JWT authentication
-- MongoDB integration
-- File uploads
-- PDF parsing
-- DOCX parsing
-- React Context
-- Protected routes
-- REST APIs
-- TypeScript
-- Tailwind CSS
-- Exporting PDF
-- Exporting DOCX
+* OpenAI Responses API
+* Long-context prompting
+* Structured JSON output
+* JWT authentication
+* MongoDB integration
+* File uploads
+* PDF parsing
+* DOCX parsing
+* React Context
+* Protected routes
+* REST APIs
+* TypeScript
+* Tailwind CSS
+* Exporting PDF
+* Exporting DOCX
 
 ---
 
 ## Author
 
-Derek Barus
+**Derek Barus**
 
-GitHub: https://github.com/barusdrk
+GitHub: [@barusdrk](https://github.com/barusdrk)
