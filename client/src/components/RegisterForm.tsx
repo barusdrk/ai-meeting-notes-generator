@@ -56,72 +56,83 @@ export default function RegisterForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto mt-12 max-w-md rounded-xl bg-white p-8 shadow"
+      className="mx-auto mt-12 max-w-md rounded-xl bg-white p-8 shadow dark:bg-gray-800"
     >
-      <h1 className="mb-6 text-center text-3xl font-bold">
+      <h1 className="mb-6 text-center text-3xl font-bold dark:text-white">
         Create Account
       </h1>
-
+  
       {error && (
-        <div className="mb-4 rounded bg-red-100 p-3 text-red-700">
+        <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-700 dark:border-red-700 dark:bg-red-900 dark:text-red-200">
           {error}
         </div>
       )}
-
-      <label className="mb-2 block">
+  
+      <label
+        htmlFor="email"
+        className="mb-2 block font-medium dark:text-white"
+      >
         Email
       </label>
-
+  
       <input
+        id="email"
         type="email"
         value={email}
-        onChange={(event) =>
-          setEmail(event.target.value)
-        }
+        onChange={(event) => setEmail(event.target.value)}
         required
-        className="mb-5 w-full rounded border p-3"
+        disabled={loading}
+        autoComplete="email"
+        className="mb-5 w-full rounded-lg border p-3 focus:border-blue-500 focus:outline-none disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800"
       />
-
-      <label className="mb-2 block">
+  
+      <label
+        htmlFor="password"
+        className="mb-2 block font-medium dark:text-white"
+      >
         Password
       </label>
-
+  
       <input
+        id="password"
         type="password"
         value={password}
-        onChange={(event) =>
-          setPassword(
-            event.target.value
-          )
-        }
+        onChange={(event) => setPassword(event.target.value)}
         required
-        className="mb-5 w-full rounded border p-3"
+        disabled={loading}
+        autoComplete="new-password"
+        className="mb-5 w-full rounded-lg border p-3 focus:border-blue-500 focus:outline-none disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800"
       />
-
-      <label className="mb-2 block">
+  
+      <label
+        htmlFor="confirm-password"
+        className="mb-2 block font-medium dark:text-white"
+      >
         Confirm Password
       </label>
-
+  
       <input
+        id="confirm-password"
         type="password"
         value={confirmPassword}
-        onChange={(event) =>
-          setConfirmPassword(
-            event.target.value
-          )
-        }
+        onChange={(event) => setConfirmPassword(event.target.value)}
         required
-        className="mb-6 w-full rounded border p-3"
+        disabled={loading}
+        autoComplete="new-password"
+        className="mb-6 w-full rounded-lg border p-3 focus:border-blue-500 focus:outline-none disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800"
       />
-
+  
       <button
         type="submit"
-        disabled={loading}
-        className="w-full rounded bg-green-600 py-3 text-white hover:bg-green-700 disabled:opacity-50"
+        disabled={
+          loading ||
+          !email.trim() ||
+          !password.trim() ||
+          !confirmPassword.trim()
+        }
+        className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
       >
-        {loading
-          ? "Creating Account..."
-          : "Register"}
+        {loading ? "Creating Account..." : "Register"}
       </button>
     </form>
   );
